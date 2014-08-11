@@ -7,7 +7,8 @@ module Huffman.Tree.Impl (
   freqTableToForest,
   freqForestToTree,
   itemsToFreqTree,
-  freqTreeToCodes
+  freqTreeToCodes,
+  itemsToCodes 
 ) where
 
 import qualified Data.Map as M
@@ -71,4 +72,7 @@ freqTreeToCodes :: Ord a => b -> (b -> b) -> (b -> b) -> FreqTree a -> M.Map a b
 freqTreeToCodes s _ _ (FreqItem _ x) = M.singleton x s
 freqTreeToCodes s f g (FreqNode u v) = M.union (subtreeToCodes f u) (subtreeToCodes g v) where
     subtreeToCodes h t = M.map h (freqTreeToCodes s f g t)
+
+itemsToCodes :: Ord a => b -> (b -> b) -> (b -> b) -> [a] -> [a] -> M.Map a b
+itemsToCodes s f g v = (freqTreeToCodes s f g) . (itemsToFreqTree v)
 
