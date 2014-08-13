@@ -33,6 +33,10 @@ type FreqTree a = Tree (a, Int)
 type FreqForest a = [FreqTree a]
 type HuffmanTree a = Tree a
 
+mapTree :: (a -> b) -> Tree a -> Tree b
+mapTree f (Leaf x) = Leaf $ f x
+mapTree f (Fork p q) = Fork (mapTree f p) (mapTree f q)
+
 instance (Show a) => Show (Tree a) where
   show = showIndent "" where
     showIndent p (Leaf x) = (show x) ++ "\n"
@@ -51,15 +55,15 @@ freqForestToTree [] = error "the frequency forest is empty"
 freqForestToTree [x] = x
 freqForestToTree (x: (y: s)) = freqForestToTree $ L.insertBy (compare `on` weight) (Fork x y) s
 
-itemsToFreqTree :: Ord a => [a] -> [a] -> FreqTree a
-itemsToFreqTree v = freqForestToTree . (L.sortBy (compare `on` weight)) . (map Leaf) . M.toList . itemsToFreqTable v
+itemsToFreqTree :: Ord a => [a] -> [a] -> HuffmanTree a
+itemsToFreqTree v = mapTree fst . freqForestToTree . (L.sortBy (compare `on` weight)) . (map Leaf) . M.toList . itemsToFreqTable v
 
 --
 -- Build Huffman code table from the tree
 --
 
-freqTreeToCodes :: Ord a => b -> (b -> b) -> (b -> b) -> FreqTree a -> M.Map a b
-freqTreeToCodes s _ _ (Leaf (x, _)) = M.singleton x s
+freqTreeToCodes :: Ord a => b -> (b -> b) -> (b -> b) -> HuffmanTree a -> M.Map a b
+freqTreeToCodes s _ _ (Leaf x) = M.singleton x s
 freqTreeToCodes s f g (Fork u v) = M.union (subtreeToCodes f u) (subtreeToCodes g v) where
     subtreeToCodes h t = M.map h (freqTreeToCodes s f g t)
 
