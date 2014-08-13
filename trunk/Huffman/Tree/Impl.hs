@@ -35,18 +35,18 @@ instance Show a => Show (FreqTree a) where
   show = showIndent "" where
     showIndent p (Leaf n c) = (show c) ++ " " ++ (show n) ++ "\n"
     showIndent p t@(Fork u v) =
-      (show $ nodeFrequency t) ++
+      (show $ weight t) ++
       "\n" ++ p ++ "|--" ++
       (showIndent (p ++ "|  ") u) ++
       p ++ "|\n" ++ p ++ "+--" ++
       (showIndent (p ++ "   ") v)
 
 compareFreqTrees :: FreqTree a -> FreqTree a -> Ordering
-compareFreqTrees x y = compare (nodeFrequency x) (nodeFrequency y)
+compareFreqTrees x y = compare (weight x) (weight y)
 
-nodeFrequency :: FreqTree a -> Int
-nodeFrequency (Leaf n _) = n
-nodeFrequency (Fork x y) = (nodeFrequency x) + (nodeFrequency y)
+weight :: FreqTree a -> Int
+weight (Leaf n _) = n
+weight (Fork x y) = (weight x) + (weight y)
 
 freqTableToForest :: Ord a => FreqTable a -> FreqForest a
 freqTableToForest = (L.sortBy compareFreqTrees) . (map pairToFreqItem) . M.toList where
