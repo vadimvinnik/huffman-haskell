@@ -3,11 +3,13 @@
 --
 
 module Huffman.Tree.Impl (
+  HuffmanTree,
   itemsToFreqTable,
   freqForestToTree,
   itemsToFreqTree,
   freqTreeToCodes,
-  itemsToCodes 
+  itemsToCodes,
+  decode
 ) where
 
 import qualified Data.Map as M
@@ -70,3 +72,11 @@ freqTreeToCodes s f g (Fork u v) = M.union (subtreeToCodes f u) (subtreeToCodes 
 itemsToCodes :: Ord a => b -> (b -> b) -> (b -> b) -> [a] -> [a] -> M.Map a b
 itemsToCodes s f g v = (freqTreeToCodes s f g) . (itemsToFreqTree v)
 
+--
+-- Decode
+--
+decode :: HuffmanTree a -> [Bool] -> [a]
+decode t s = decodeEngine t s where
+  decodeEngine (Leaf c) [] = [c]
+  decodeEngine (Leaf c) bs = c : decodeEngine t bs
+  decodeEngine (Fork p q) (b:bs) = decodeEngine (if b then q else p) bs

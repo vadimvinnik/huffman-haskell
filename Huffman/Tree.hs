@@ -9,6 +9,8 @@ import qualified Data.ByteString.Lazy as L
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Char8 as C
 import qualified Data.Map as M
+import Data.Bits
+import Data.Char
 
 type Byte = Data.Word.Word8
 
@@ -25,3 +27,9 @@ huffmanEncode s = huffmanEncodeWith (bytesToBitCodes s) s
 
 huffmanEncodeString :: String -> L.ByteString
 huffmanEncodeString = huffmanEncode . S.unpack . C.pack
+
+byteToBits :: Byte -> [Bool]
+byteToBits b = map (testBit b) $ reverse [0..7]
+
+huffmanDecodeString :: HuffmanTree Byte -> S.ByteString -> String
+huffmanDecodeString t = (map (chr . fromEnum)) . (decode t) .concat . (map byteToBits) . S.unpack
