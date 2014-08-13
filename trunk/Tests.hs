@@ -1,6 +1,16 @@
-import Huffman.Tree.Impl
+--
+-- A test application for Huffman encoding
+--
+-- Only tests the worker functions representing binary
+-- codes as strings of 0s and 1s for readability.
+--
+-- (c) Vadim Vinnik, 2014
+--
 
+import Huffman.Tree.Impl
 import qualified Data.Map as M
+
+type StringCodeMap = M.Map Char String
 
 texts = [
   "too hot to hoot",
@@ -8,21 +18,47 @@ texts = [
   "this is just a short test string",
   "Haskell is a computer programming language. In particular, it is a polymorphically statically typed, lazy, purely functional language, quite different from most other programming languages. The language is named for Haskell Brooks Curry, whose work in mathematical logic serves as a foundation for functional languages. Haskell is based on the lambda calculus, hence the lambda we use as a logo."]
 
-treeToCodes :: HuffmanTree Char -> M.Map Char String
-treeToCodes = freqTreeToCodes "" ('0':) ('1':)
+toStringCodeTable :: HuffmanTree Char -> StringCodeMap
+toStringCodeTable = toCodeTable "" ('0':) ('1':)
 
-huffmanEncodeWith :: M.Map Char String -> String -> String
-huffmanEncodeWith m = concat . (map (m M.!))
+encodeWithStrings :: StringCodeMap -> String -> String
+encodeWithStrings m = concat . (map (m M.!))
 
-huffmanDecodeString :: HuffmanTree Char -> String -> String
-huffmanDecodeString t = decode t . map (=='1')
+decodeWithStrings :: HuffmanTree Char -> String -> String
+decodeWithStrings t = decode t . map (=='1')
 
-testHuffman :: String -> Bool
-testHuffman s = d == s where
-  d = huffmanDecodeString t e
-  e = huffmanEncodeWith m s
-  m = treeToCodes t
-  t = itemsToFreqTree "" s 
+data TestDetails = TestDetails {
+  input   :: String,
+  tree    :: HuffmanTree Char,
+  codes   :: StringCodeMap,
+  encoded :: String,
+  decoded :: String
+} deriving (Show)
+  
+testHuffman :: String -> TestDetails
+testHuffman s = TestDetails {
+    input = s,
+    tree = t,
+    codes = m,
+    encoded = e,
+    decoded = d
+  } where
+  d = decodeWithStrings t e
+  e = encodeWithStrings m s
+  m = toStringCodeTable t
+  t = toTree "" s 
+
+isPassed :: TestDetails -> Bool
+isPassed x = (input x) == (decoded x)
 
 main = do
-  putStrLn $ show $ map testHuffman texts
+  mapM printTest texts where
+  printTest s =
+    let t = testHuffman s in
+    if isPassed t
+      then do
+        putStrLn "Passed"
+      else do
+        putStrLn "Failed"
+        print t
+
