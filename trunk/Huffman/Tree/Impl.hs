@@ -12,6 +12,7 @@ module Huffman.Tree.Impl (
 
 import qualified Data.Map as M
 import qualified Data.List as L
+import Data.Function
 
 --
 -- Build frequency table from a list of items
@@ -30,6 +31,7 @@ itemsToFreqTable v t = M.fromListWith (+) ((toPairs 0 v) ++ (toPairs 1 t)) where
 data Tree a = Fork (Tree a) (Tree a) | Leaf a
 type FreqTree a = Tree (a, Int)
 type FreqForest a = [FreqTree a]
+type HuffmanTree a = Tree a
 
 instance (Show a) => Show (Tree a) where
   show = showIndent "" where
@@ -40,9 +42,6 @@ instance (Show a) => Show (Tree a) where
       p ++ "|\n" ++ p ++ "+--" ++
       (showIndent (p ++ "   ") v)
 
-compareFreqTrees :: FreqTree a -> FreqTree a -> Ordering
-compareFreqTrees x y = compare (weight x) (weight y)
-
 weight :: FreqTree a -> Int
 weight (Leaf (_, n)) = n
 weight (Fork x y) = (weight x) + (weight y)
@@ -50,10 +49,10 @@ weight (Fork x y) = (weight x) + (weight y)
 freqForestToTree :: Ord a => FreqForest a -> FreqTree a
 freqForestToTree [] = error "the frequency forest is empty"
 freqForestToTree [x] = x
-freqForestToTree (x: (y: s)) = freqForestToTree $ L.insertBy compareFreqTrees (Fork x y) s
+freqForestToTree (x: (y: s)) = freqForestToTree $ L.insertBy (compare `on` weight) (Fork x y) s
 
 itemsToFreqTree :: Ord a => [a] -> [a] -> FreqTree a
-itemsToFreqTree v = freqForestToTree . (L.sortBy compareFreqTrees) . (map Leaf) . M.toList . itemsToFreqTable v
+itemsToFreqTree v = freqForestToTree . (L.sortBy (compare `on` weight)) . (map Leaf) . M.toList . itemsToFreqTable v
 
 --
 -- Build Huffman code table from the tree
