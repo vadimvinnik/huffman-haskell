@@ -28,15 +28,15 @@ itemsToFreqTable v t = M.fromListWith (+) ((toPairs 0 v) ++ (toPairs 1 t)) where
 -- Build Huffman tree from a frequency table
 --
 
-data FreqTree a = Fork (FreqTree a) (FreqTree a) | Leaf Int a
+data Tree a = Fork (Tree a) (Tree a) | Leaf a
+type FreqTree a = Tree (Int, a)
 type FreqForest a = [FreqTree a]
 
-instance Show a => Show (FreqTree a) where
+instance (Show a) => Show (Tree a) where
   show = showIndent "" where
-    showIndent p (Leaf n c) = (show c) ++ " " ++ (show n) ++ "\n"
-    showIndent p t@(Fork u v) =
-      (show $ weight t) ++
-      "\n" ++ p ++ "|--" ++
+    showIndent p (Leaf x) = (show x) ++ "\n"
+    showIndent p (Fork u v) =
+      "*\n" ++ p ++ "|--" ++
       (showIndent (p ++ "|  ") u) ++
       p ++ "|\n" ++ p ++ "+--" ++
       (showIndent (p ++ "   ") v)
@@ -45,12 +45,12 @@ compareFreqTrees :: FreqTree a -> FreqTree a -> Ordering
 compareFreqTrees x y = compare (weight x) (weight y)
 
 weight :: FreqTree a -> Int
-weight (Leaf n _) = n
+weight (Leaf (n, _)) = n
 weight (Fork x y) = (weight x) + (weight y)
 
 freqTableToForest :: Ord a => FreqTable a -> FreqForest a
 freqTableToForest = (L.sortBy compareFreqTrees) . (map pairToFreqItem) . M.toList where
-    pairToFreqItem (x, n) = (Leaf n x)
+    pairToFreqItem (x, n) = (Leaf (n, x))
 
 freqForestToTree :: Ord a => FreqForest a -> FreqTree a
 freqForestToTree [] = error "the frequency forest is empty"
@@ -65,7 +65,7 @@ itemsToFreqTree v = freqForestToTree . freqTableToForest . itemsToFreqTable v
 --
 
 freqTreeToCodes :: Ord a => b -> (b -> b) -> (b -> b) -> FreqTree a -> M.Map a b
-freqTreeToCodes s _ _ (Leaf _ x) = M.singleton x s
+freqTreeToCodes s _ _ (Leaf (_, x)) = M.singleton x s
 freqTreeToCodes s f g (Fork u v) = M.union (subtreeToCodes f u) (subtreeToCodes g v) where
     subtreeToCodes h t = M.map h (freqTreeToCodes s f g t)
 
