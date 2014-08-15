@@ -10,6 +10,15 @@
 import Huffman.Tree.Impl
 import qualified Data.Map as M
 
+instance (Show a) => Show (Tree a) where
+  show = showIndent "" where
+    showIndent p (Leaf x) = (show x) ++ "\n"
+    showIndent p (Fork u v) =
+      "*\n" ++ p ++ "|--" ++
+      (showIndent (p ++ "|  ") u) ++
+      p ++ "|\n" ++ p ++ "+--" ++
+      (showIndent (p ++ "   ") v)
+
 type StringCodeMap = M.Map Char String
 
 texts = [
