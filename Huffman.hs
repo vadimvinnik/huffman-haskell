@@ -20,8 +20,8 @@ import Data.Function
 
 type FreqTable a = M.Map a Int
 
-itemsToFreqTable :: Ord a => [a] -> [a] -> FreqTable a
-itemsToFreqTable v t = M.fromListWith (+) ((toPairs 0 v) ++ (toPairs 1 t)) where
+toFreqTable :: Ord a => [a] -> [a] -> FreqTable a
+toFreqTable v t = M.fromListWith (+) ((toPairs 0 v) ++ (toPairs 1 t)) where
   toPairs x = L.map (flip (,) x)
 
 -- Build Huffman tree from a frequency table
@@ -51,7 +51,7 @@ toTree v =
   (L.sortBy (compare `on` weight)) .
   (map Leaf) .
   M.toList .
-  itemsToFreqTable v
+  toFreqTable v
 
 -- Build Huffman code table from the tree
 
