@@ -7,7 +7,7 @@
 -- (c) Vadim Vinnik, 2014
 --
 
-import Huffman.Tree.Impl
+import Huffman
 import qualified Data.Map as M
 
 instance (Show a) => Show (Tree a) where
