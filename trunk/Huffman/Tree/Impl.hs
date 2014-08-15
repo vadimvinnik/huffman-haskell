@@ -6,6 +6,7 @@
 
 module Huffman.Tree.Impl (
   HuffmanTree,
+  Tree (Leaf, Fork),
   toTree,
   toCodeTable,
   decode
@@ -33,15 +34,6 @@ type HuffmanTree a = Tree a
 mapTree :: (a -> b) -> Tree a -> Tree b
 mapTree f (Leaf x) = Leaf $ f x
 mapTree f (Fork p q) = Fork (mapTree f p) (mapTree f q)
-
-instance (Show a) => Show (Tree a) where
-  show = showIndent "" where
-    showIndent p (Leaf x) = (show x) ++ "\n"
-    showIndent p (Fork u v) =
-      "*\n" ++ p ++ "|--" ++
-      (showIndent (p ++ "|  ") u) ++
-      p ++ "|\n" ++ p ++ "+--" ++
-      (showIndent (p ++ "   ") v)
 
 weight :: FreqTree a -> Int
 weight (Leaf (_, n)) = n
@@ -75,4 +67,3 @@ decode t s = decodeEngine t s where
   decodeEngine (Leaf c) [] = [c]
   decodeEngine (Leaf c) bs = c : decodeEngine t bs
   decodeEngine (Fork p q) (b:bs) = decodeEngine (if b then q else p) bs
-
