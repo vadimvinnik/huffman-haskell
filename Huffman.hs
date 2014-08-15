@@ -4,7 +4,7 @@
 -- (c) Vadim Vinnik, 2014
 --
 
-module Huffman.Tree.Impl (
+module Huffman (
   HuffmanTree,
   Tree (Leaf, Fork),
   toTree,
