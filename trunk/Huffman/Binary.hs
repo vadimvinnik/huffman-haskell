@@ -1,8 +1,8 @@
-module Huffman.Tree (
-  bytesToBitCodes
+module Huffman.Binary (
+  toBinaryCodeTable
 ) where
 
-import Huffman.Tree.Impl
+import Huffman
 import qualified Data.Word
 import qualified Data.Binary.BitBuilder as B
 import qualified Data.ByteString.Lazy as L
@@ -14,22 +14,31 @@ import Data.Char
 
 type Byte = Data.Word.Word8
 
-bytesToBitCodes :: [Byte] -> M.Map Byte B.BitBuilder
-bytesToBitCodes = itemsToCodes B.empty (appendBit False) (appendBit True) [minBound::Byte .. maxBound::Byte] where
+stringToBytes :: String -> [Byte]
+stringToBytes = S.unpack . C.pack
+
+bytesToString :: [Byte] -> String
+bytesToString = C.unpack . S.pack
+
+bytesToHuffmanTree :: [Byte] -> HuffmanTree Byte
+bytesToHuffmanTree = toTree [minBound::Byte .. maxBound::Byte]
+
+toBinaryCodeTable :: HuffmanTree Byte -> M.Map Byte B.BitBuilder
+toBinaryCodeTable = toCodeTable B.empty (appendBit False) (appendBit True) where
   appendBit b = B.append $ B.singleton b
 
-huffmanEncodeWith :: M.Map Byte B.BitBuilder -> [Byte] -> L.ByteString
-huffmanEncodeWith m t = B.toLazyByteString $ foldl encodeByte B.empty t where
+encodeBinaryWith :: M.Map Byte B.BitBuilder -> [Byte] -> L.ByteString
+encodeBinaryWith m t = B.toLazyByteString $ foldl encodeByte B.empty t where
   encodeByte s b = B.append (m M.! b) s
 
-huffmanEncode :: [Byte] -> L.ByteString
-huffmanEncode s = huffmanEncodeWith (bytesToBitCodes s) s
+encodeBinary :: [Byte] -> L.ByteString
+encodeBinary s = encodeBinaryWith (toBinaryCodeTable $ bytesToHuffmanTree s) s
 
-huffmanEncodeString :: String -> L.ByteString
-huffmanEncodeString = huffmanEncode . S.unpack . C.pack
+encodeStringToBinary :: String -> L.ByteString
+encodeStringToBinary = encodeBinary . stringToBytes
 
 byteToBits :: Byte -> [Bool]
 byteToBits b = map (testBit b) $ reverse [0..7]
 
-huffmanDecodeString :: HuffmanTree Byte -> S.ByteString -> String
-huffmanDecodeString t = (map (chr . fromEnum)) . (decode t) .concat . (map byteToBits) . S.unpack
+decodeBinaryWith :: HuffmanTree Byte -> S.ByteString -> String
+decodeBinaryWith t = bytesToString . (decode t) .concat . (map byteToBits) . S.unpack
