@@ -19,19 +19,11 @@ instance (Show a) => Show (Tree a) where
       p ++ "|\n" ++ p ++ "+--" ++
       (showIndent (p ++ "   ") v)
 
-type StringCodeMap = M.Map Char String
-
 texts = [
   "too hot to hoot",
   "a quick brown fox jumps over the lazy dog",
   "this is just a short test string",
   "Haskell is a computer programming language. In particular, it is a polymorphically statically typed, lazy, purely functional language, quite different from most other programming languages. The language is named for Haskell Brooks Curry, whose work in mathematical logic serves as a foundation for functional languages. Haskell is based on the lambda calculus, hence the lambda we use as a logo."]
-
-toStringCodeTable :: HuffmanTree Char -> StringCodeMap
-toStringCodeTable = toCodeTable "" ('0':) ('1':)
-
-encodeWithStrings :: StringCodeMap -> String -> String
-encodeWithStrings m = concat . (map (m M.!))
 
 decodeWithStrings :: HuffmanTree Char -> String -> String
 decodeWithStrings t = decode t . map (=='1')
@@ -39,8 +31,8 @@ decodeWithStrings t = decode t . map (=='1')
 data TestDetails = TestDetails {
   input   :: String,
   tree    :: HuffmanTree Char,
-  codes   :: StringCodeMap,
-  encoded :: String,
+  codes   :: M.Map Char [Bool],
+  encoded :: [Bool],
   decoded :: String
 } deriving (Show)
   
@@ -52,9 +44,9 @@ testHuffman s = TestDetails {
     encoded = e,
     decoded = d
   } where
-  d = decodeWithStrings t e
-  e = encodeWithStrings m s
-  m = toStringCodeTable t
+  d = decode t e
+  e = encode m s
+  m = toCodeTable t
   t = toTree "" s 
 
 isPassed :: TestDetails -> Bool
