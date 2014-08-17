@@ -9,6 +9,7 @@ module Huffman (
   Tree (Leaf, Fork),
   toTree,
   toCodeTable,
+  encode,
   decode
 ) where
 
@@ -55,10 +56,15 @@ toTree v =
 
 -- Build Huffman code table from the tree
 
-toCodeTable :: Ord a => b -> (b -> b) -> (b -> b) -> HuffmanTree a -> M.Map a b
-toCodeTable s _ _ (Leaf x) = M.singleton x s
-toCodeTable s f g (Fork u v) = M.union (subtreeToCodes f u) (subtreeToCodes g v) where
-    subtreeToCodes h t = M.map h (toCodeTable s f g t)
+toCodeTable :: Ord a => HuffmanTree a -> M.Map a [Bool]
+toCodeTable (Leaf x) = M.singleton x []
+toCodeTable (Fork u v) = M.union (subtreeToCodes False u) (subtreeToCodes True v) where
+    subtreeToCodes h t = M.map (h:) (toCodeTable t)
+
+-- Encode
+
+encode :: Ord a => M.Map a [Bool] -> [a] -> [Bool]
+encode m = concat . map (m M.!)
 
 -- Decode
 
