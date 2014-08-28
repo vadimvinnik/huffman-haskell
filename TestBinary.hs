@@ -15,18 +15,10 @@ stringToBytes = L.pack . map (toEnum . ord)
 bytesToString :: L.ByteString -> String
 bytesToString = map (chr . fromEnum) . L.unpack 
 
-test :: String -> (L.ByteString, String, Float)
-test s = (e, d, 1.0 - ((fromIntegral $ L.length e) / (fromIntegral $ length s))) where
+test :: String -> (String, Float)
+test s = (t, 1.0 - ((fromIntegral $ L.length e) / (fromIntegral $ length s))) where
   b = stringToBytes s
-  t = bytesToHuffmanTree b
-  m = toCodeTable t
-  e = encodeBinary m b
-  d = bytesToString $ decodeBinary t (L.length b) e
-
-testTreeSerialization :: String -> Bool
-testTreeSerialization s = (t == d) where
-  b = stringToBytes s
-  t = bytesToHuffmanTree b
-  e = serializeTreeBinary t
-  d = deserializeTreeBinary e
+  e = compress b
+  d = decompress e
+  t = bytesToString d
 
