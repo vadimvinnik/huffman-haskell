@@ -68,9 +68,9 @@ serializeTree t = (leaves t [], structure t []) where
   structure (Leaf _) bs = True:bs
   structure (Fork u v) bs = False:(structure u (structure v bs))
 
-deserializeTree :: [a] -> [Bool] -> HuffmanTree a
-deserializeTree cs bs = t where
-  (t, _, _) = deserializeTree' cs bs
+deserializeTree :: [a] -> [Bool] -> (HuffmanTree a, [Bool])
+deserializeTree cs bs = (t, bs') where
+  (t, _, bs') = deserializeTree' cs bs
   deserializeTree' (c:cs) (True:bs) = (Leaf c, cs, bs)
   deserializeTree' cs0 (False:bs0) = (Fork u v, cs2, bs2) where
     (u, cs1, bs1) = deserializeTree' cs0 bs0
