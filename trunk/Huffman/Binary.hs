@@ -49,7 +49,10 @@ deserializeTreeBinary bs = deserializeTree (L.unpack as) (concat $ map byteToBit
   m = toEnum $ fromEnum $ (runGet getWord8) bs
 
 compressWithLength :: Int64 -> L.ByteString -> L.ByteString
-compressWithLength n bs = L.fromChunks $ map L.toStrict [ U.toLazyByteString $ U.int64BE n, serializeTreeBinary t, encodeBinary m bs] where
+compressWithLength n bs = a `L.append` b `L.append` c  where
+  a = U.toLazyByteString $ U.int64BE n
+  b = serializeTreeBinary t
+  c = encodeBinary m bs
   t = bytesToHuffmanTree bs
   m = toCodeTable t
 
