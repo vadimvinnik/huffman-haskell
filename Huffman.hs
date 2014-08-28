@@ -9,6 +9,8 @@ module Huffman (
   Tree (Leaf, Fork),
   toTree,
   toCodeTable,
+  serializeTree,
+  deserializeTree,
   encode,
   decode
 ) where
@@ -53,6 +55,26 @@ toTree v =
   (map Leaf) .
   M.toList .
   toFreqTable v
+
+-- Serialize Huffman tree into a pair:
+--   - list of leaf items;
+--   - node structure: 0 opens a fork, 1 denotes a leaf;
+-- e.g. tree ((a b) (c d)) turns into (a b c d, 0 0 1 1 0 1 1)
+
+serializeTree :: HuffmanTree a -> ([a], [Bool])
+serializeTree t = (leaves t [], structure t []) where
+  leaves (Leaf x) ys = x:ys
+  leaves (Fork u v) ys = leaves u (leaves v ys)
+  structure (Leaf _) bs = True:bs
+  structure (Fork u v) bs = False:(structure u (structure v bs))
+
+deserializeTree :: [a] -> [Bool] -> HuffmanTree a
+deserializeTree cs bs = t where
+  (t, _, _) = deserializeTree' cs bs
+  deserializeTree' (c:cs) (True:bs) = (Leaf c, cs, bs)
+  deserializeTree' cs0 (False:bs0) = (Fork u v, cs2, bs2) where
+    (u, cs1, bs1) = deserializeTree' cs0 bs0
+    (v, cs2, bs2) = deserializeTree' cs1 bs1
 
 -- Build Huffman code table from the tree
 
