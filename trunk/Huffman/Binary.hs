@@ -44,8 +44,8 @@ compressWithLength n bs = L.append a (B.toLazyByteString $ B.append b c)  where
 compress :: L.ByteString -> L.ByteString
 compress bs = compressWithLength (L.length bs) bs
 
-decompress :: L.ByteString -> (L.ByteString, HuffmanTree Byte)
-decompress bs0 = (L.take (toEnum $ fromEnum n) $ L.pack $ decode t bs6, t) where
+decompress :: L.ByteString -> L.ByteString
+decompress bs0 = L.pack $ take (toEnum $ fromEnum n) $ decode t bs6 where
   (n, bs1, _)  = runGetState getWord64be bs0 0
   (m, bs2, _)  = runGetState getWord8 bs1 0
   (bs3, bs4)   = L.splitAt (toEnum $ fromEnum m) bs2
