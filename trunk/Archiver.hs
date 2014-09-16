@@ -24,20 +24,9 @@ compressFile i o = do
   
 decompressFile :: Handle -> Handle -> IO ()
 decompressFile i o = do
-  bs0 <- L.hGetContents i
-  print $ take 16 $ L.unpack bs0
-  let (n, bs1, _)  = runGetState getWord64be bs0 0
-  print $ take 16 $ L.unpack bs1
-  let (m, bs2, _)  = runGetState getWord8 bs1 0
-  print $ take 16 $ L.unpack bs2
-  print n
-  print m
-  let (bs3, bs4)   = L.splitAt (toEnum $ fromEnum m + 1) bs2
-  let bs5          = concat $ map byteToBits $ L.unpack bs4
-  let (t, bs6)     = deserializeTree (L.unpack bs3) bs5
-  print t
-  let c = L.pack $ take (toEnum $ fromEnum n) $ decode t bs6
-  L.hPut o c
+  s <- L.hGetContents i
+  let t = decompress s
+  L.hPut o t
 
 main = do
   (m:i:o:[]) <- getArgs

@@ -51,7 +51,7 @@ decompress bs0 = L.pack $ take (toEnum $ fromEnum n) $ decode t bs6
   where
     (n, bs1, _)  = runGetState getWord64be bs0 0
     (m, bs2, _)  = runGetState getWord8 bs1 0
-    (bs3, bs4)   = L.splitAt (toEnum $ fromEnum m) bs2
+    (bs3, bs4)   = L.splitAt ((toEnum $ fromEnum m) + 1) bs2
     bs5          = concat $ map byteToBits $ L.unpack bs4
     (t, bs6)     = deserializeTree (L.unpack bs3) bs5
 
