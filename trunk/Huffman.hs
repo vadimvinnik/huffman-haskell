@@ -10,8 +10,9 @@ module Huffman (
   CodeTable,
   histogramToTree,
   treeToCodeTable,
-  serializeTree,
-  deserializeTree,
+  treeLeaves,
+  treeStructure,
+  restoreTree,
   encode,
   decode
 ) where
@@ -37,25 +38,29 @@ histogramToTree h =
     weight (Leaf c) = h ! c
     weight (Fork x y) = (weight x) + (weight y)
 
--- serialize node structure: F opens a fork, T denotes a leaf;
--- e.g. tree ((a b) (c d)) turns into (a b c d, F F T T F T T)
-serializeTree :: Tree a -> ([a], [Bool])
-serializeTree t = (leaves t [], structure t [])
+treeLeaves :: Tree a -> [a]
+treeLeaves = treeLeaves' []
   where
-    leaves (Leaf x) ys = x:ys
-    leaves (Fork u v) ys = leaves u (leaves v ys)
-    structure (Leaf _) bs = True:bs
-    structure (Fork u v) bs = False:(structure u (structure v bs))
+    treeLeaves' ys (Leaf x) = x:ys
+    treeLeaves' ys (Fork u v) = treeLeaves' (treeLeaves' ys v) u
 
-deserializeTree :: [a] -> [Bool] -> (Tree a, [Bool])
-deserializeTree cs bs = (t, bs')
+-- serialize node structure: F opens a fork, T denotes a leaf;
+-- e.g. tree ((a b) (c d)) turns into (F F T T F T T)
+treeStructure :: Tree a -> [Bool]
+treeStructure = treeStructure' []
   where
-    (t, _, bs') = deserializeTree' cs bs
-    deserializeTree' (c:cs) (True:bs) = (Leaf c, cs, bs)
-    deserializeTree' cs0 (False:bs0) = (Fork u v, cs2, bs2)
+    treeStructure' bs (Leaf _) = True:bs
+    treeStructure' bs (Fork u v) = False:(treeStructure' (treeStructure' bs v) u)
+
+restoreTree :: [a] -> [Bool] -> (Tree a, [Bool])
+restoreTree cs bs = (t, bs')
+  where
+    (t, _, bs') = restoreTree' cs bs
+    restoreTree' (c:cs) (True:bs) = (Leaf c, cs, bs)
+    restoreTree' cs0 (False:bs0) = (Fork u v, cs2, bs2)
       where
-        (u, cs1, bs1) = deserializeTree' cs0 bs0
-        (v, cs2, bs2) = deserializeTree' cs1 bs1
+        (u, cs1, bs1) = restoreTree' cs0 bs0
+        (v, cs2, bs2) = restoreTree' cs1 bs1
 
 treeToCodeTable :: Ord a => Tree a -> CodeTable a
 treeToCodeTable (Leaf x) = singleton x []
