@@ -1,5 +1,5 @@
 --
--- Worker functions for building frequency tables, Huffman trees and code tables
+-- Worker functions for Huffman encoding and decoding
 --
 -- (c) Vadim Vinnik, 2014
 --
