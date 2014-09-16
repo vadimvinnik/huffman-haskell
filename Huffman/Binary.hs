@@ -1,6 +1,6 @@
 module Huffman.Binary (
-  compress,
   byteToBits,
+  packBits,
   decompress
 ) where
 
@@ -17,29 +17,11 @@ import GHC.Int
 
 type Byte = Data.Word.Word8
 
-(+++) = B.append
-
 byteToBits :: Byte -> [Bool]
 byteToBits b = map (testBit b) $ reverse [0..7]
 
 packBits :: [Bool] -> B.BitBuilder
 packBits = foldl B.append B.empty . map B.singleton
-
-serializeTreeToBits :: Tree Byte -> B.BitBuilder
-serializeTreeToBits t =
-  (B.fromLazyByteString $ runPut $ putWord8 $ fromIntegral $ (length as) - 1)
-  +++
-  (B.fromLazyByteString $ L.pack as)
-  +++
-  (packBits ns)
-    where
-      (as, ns) = serializeTree t
-
-compress :: Histogram Byte -> [Byte] -> L.ByteString
-compress h s = B.toLazyByteString $ (serializeTreeToBits t) +++ (packBits $ encode m s)
-  where
-    t = histogramToTree h
-    m = treeToCodeTable t
 
 decompress :: L.ByteString -> L.ByteString
 decompress bs0 = L.pack $ take (fromIntegral n) $ decode t bs6
@@ -48,5 +30,5 @@ decompress bs0 = L.pack $ take (fromIntegral n) $ decode t bs6
     (m, bs2, _)  = runGetState getWord8 bs1 0
     (bs3, bs4)   = L.splitAt ((fromIntegral m) + 1) bs2
     bs5          = concat $ map byteToBits $ L.unpack bs4
-    (t, bs6)     = deserializeTree (L.unpack bs3) bs5
+    (t, bs6)     = restoreTree (L.unpack bs3) bs5
 
