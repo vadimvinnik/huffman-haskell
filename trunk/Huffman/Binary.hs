@@ -27,7 +27,7 @@ packBits = foldl B.append B.empty . map B.singleton
 
 serializeTreeToBits :: Tree Byte -> B.BitBuilder
 serializeTreeToBits t =
-  (B.fromLazyByteString $ runPut $ putWord8 $ toEnum $ fromEnum $ (length as) - 1)
+  (B.fromLazyByteString $ runPut $ putWord8 $ fromIntegral $ (length as) - 1)
   +++
   (B.fromLazyByteString $ L.pack as)
   +++
@@ -35,23 +35,18 @@ serializeTreeToBits t =
     where
       (as, ns) = serializeTree t
 
-encodeToBits :: M.Map Byte [Bool] -> [Byte] -> B.BitBuilder
-encodeToBits m = packBits . encode m
-
 compress :: Histogram Byte -> [Byte] -> L.ByteString
-compress h s = B.toLazyByteString $ b +++ c
+compress h s = B.toLazyByteString $ (serializeTreeToBits t) +++ (packBits $ encode m s)
   where
-    b = serializeTreeToBits t
-    c = encodeToBits m s
     t = histogramToTree h
     m = treeToCodeTable t
 
 decompress :: L.ByteString -> L.ByteString
-decompress bs0 = L.pack $ take (toEnum $ fromEnum n) $ decode t bs6
+decompress bs0 = L.pack $ take (fromIntegral n) $ decode t bs6
   where
     (n, bs1, _)  = runGetState getWord64be bs0 0
     (m, bs2, _)  = runGetState getWord8 bs1 0
-    (bs3, bs4)   = L.splitAt ((toEnum $ fromEnum m) + 1) bs2
+    (bs3, bs4)   = L.splitAt ((fromIntegral m) + 1) bs2
     bs5          = concat $ map byteToBits $ L.unpack bs4
     (t, bs6)     = deserializeTree (L.unpack bs3) bs5
 
