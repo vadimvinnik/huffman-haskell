@@ -13,7 +13,7 @@ import qualified Data.Map as M
 compressFile :: Handle -> Handle -> IO ()
 compressFile i o = do
   n <- hFileSize i
-  L.hPut o $ runPut $ putWord64be $ toEnum $ fromEnum n
+  L.hPut o $ runPut $ putWord64be $ fromIntegral n
   b <- L.hGetContents i
   let s = L.unpack b
   a <- makeHistogram s
