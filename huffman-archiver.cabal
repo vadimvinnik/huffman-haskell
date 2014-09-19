@@ -6,7 +6,7 @@ version:             0.1.0.0
 synopsis:            Huffman archiver
 -- description:         
 -- license:             
-license-file:        LICENSE
+-- license-file:        LICENSE
 author:              Vadim Vinnik
 maintainer:          vadim.vinnik@gmail.com
 -- copyright:           
