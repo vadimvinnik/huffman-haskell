@@ -17,10 +17,10 @@ module Huffman (
   decode
 ) where
 
-import Data.Map (Map, keys, fromListWith, singleton, union, (!))
-import qualified Data.Map as M
-import Data.List (sortBy, insertBy)
-import Data.Function
+import Data.Function (on)
+import Data.List     (sortBy, insertBy)
+import Data.Map      (Map, keys, fromListWith, singleton, union, (!))
+import qualified Data.Map as M (map)
 
 type Histogram a = Map a Int
 type CodeTable a = Map a [Bool]
