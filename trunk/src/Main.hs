@@ -13,7 +13,7 @@ import Data.Binary.Get        (getWord8, getWord64be, runGetState)
 import Data.Binary.Put        (putWord8, putWord64be, runPut)
 import Data.Array.IO          (IOArray, newArray, readArray, writeArray, getAssocs)
 import Data.Bits              (testBit)
-import Data.Word              (Word8)
+import Data.Word              (Word8, Word64)
 import Data.Map               (fromList)
 import Data.Binary.BitBuilder (BitBuilder, append, empty, singleton, toLazyByteString)
 import Data.ByteString.Lazy   (hPut, unpack, pack)
@@ -36,7 +36,7 @@ process "-c" = compressFile
 process "-d" = decompressFile
 process _ = error "Usage: (-c|-d) infile outfile"
 
-updateHistogram :: IOArray Word8 Int -> Word8 -> IO ()
+updateHistogram :: IOArray Word8 Word64 -> Word8 -> IO ()
 updateHistogram h x = do
   c <- readArray h x
   let d = c+1
