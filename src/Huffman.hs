@@ -20,9 +20,10 @@ module Huffman (
 import Data.Function (on)
 import Data.List     (sortBy, insertBy)
 import Data.Map      (Map, keys, fromListWith, singleton, union, (!))
+import Data.Word     (Word64)
 import qualified Data.Map as M (map)
 
-type Histogram a = Map a Int
+type Histogram a = Map a Word64
 type CodeTable a = Map a [Bool]
 data Tree a = Fork (Tree a) (Tree a) | Leaf a
 
