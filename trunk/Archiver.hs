@@ -1,14 +1,40 @@
-import System.IO
-import System.Environment
-import Data.Binary.Get
-import Data.Binary.Put
-import Data.Array.IO
-import Data.Bits
-import Data.Word
+--
+-- Huffman archiver
+--
+-- (c) Vadim Vinnik, 2014
+--
+
 import Huffman
-import qualified Data.ByteString.Lazy as L
-import qualified Data.Binary.BitBuilder as B
-import qualified Data.Map as M
+
+import System.IO
+import Control.Exception      (bracket)
+import System.Environment     (getArgs)
+import Data.Binary.Get        (getWord8, getWord64be, runGetState)
+import Data.Binary.Put        (putWord8, putWord64be, runPut)
+import Data.Array.IO          (IOArray, newArray, readArray, writeArray, getAssocs)
+import Data.Bits              (testBit)
+import Data.Word              (Word8)
+import Data.Map               (fromList)
+import Data.Binary.BitBuilder (BitBuilder, append, empty, singleton, toLazyByteString)
+import Data.ByteString.Lazy   (hPut, unpack, pack)
+import qualified Data.ByteString.Lazy as L (hGetContents, splitAt)
+
+main = do
+  (m:i:o:[]) <- getArgs
+  bracket
+    (openBinaryFile i ReadMode)
+    (\h -> hClose h)
+    (\h -> processInput m o h)
+
+processInput m o i =
+  bracket
+    (openBinaryFile o WriteMode)
+    (\h -> hClose h)
+    (\h -> (process m) i h)
+
+process "-c" = compressFile
+process "-d" = decompressFile
+process _ = error "Usage: (-c|-d) infile outfile"
 
 updateHistogram :: IOArray Word8 Int -> Word8 -> IO ()
 updateHistogram h x = do
@@ -21,53 +47,38 @@ makeHistogram s = do
   a <- newArray (0,255) 0
   mapM_ (updateHistogram a) s
   l <- getAssocs a
-  let h = M.fromList l
+  let h = fromList l
   return h
+
+byteToBits :: Word8 -> [Bool]
+byteToBits b = map (testBit b) $ reverse [0..7]
+
+packBits :: [Bool] -> BitBuilder
+packBits = foldl append empty . map singleton
 
 compressFile :: Handle -> Handle -> IO ()
 compressFile i o = do
   n <- hFileSize i
-  L.hPut o $ runPut $ putWord64be $ fromIntegral n
+  hPut o $ runPut $ putWord64be $ fromIntegral n
   b <- L.hGetContents i
-  let s = L.unpack b
+  let s = unpack b
   h <- makeHistogram s
   let t = histogramToTree h
   let m = treeToCodeTable t
   let l = treeLeaves t
-  L.hPut o $ runPut $ putWord8 $ fromIntegral $ subtract 1 $ length l
-  L.hPut o $ L.pack l
+  hPut o $ runPut $ putWord8 $ fromIntegral $ subtract 1 $ length l
+  hPut o $ pack l
   let v =  (treeStructure t) ++ (encode m s)
-  L.hPut o $ B.toLazyByteString $ packBits v
+  hPut o $ toLazyByteString $ packBits v
   
-byteToBits :: Word8 -> [Bool]
-byteToBits b = map (testBit b) $ reverse [0..7]
-
-packBits :: [Bool] -> B.BitBuilder
-packBits = foldl B.append B.empty . map B.singleton
-
-decompress :: L.ByteString -> L.ByteString
-decompress bs0 = L.pack $ take (fromIntegral n) $ decode t bs6
-  where
-    (n, bs1, _)  = runGetState getWord64be bs0 0
-    (m, bs2, _)  = runGetState getWord8 bs1 0
-    (bs3, bs4)   = L.splitAt ((fromIntegral m) + 1) bs2
-    bs5          = concat $ map byteToBits $ L.unpack bs4
-    (t, bs6)     = restoreTree (L.unpack bs3) bs5
-
 decompressFile :: Handle -> Handle -> IO ()
 decompressFile i o = do
-  s <- L.hGetContents i
-  let t = decompress s
-  L.hPut o t
+  s0 <- L.hGetContents i
+  let (n, s1, _)  = runGetState getWord64be s0 0
+  let (m, s2, _)  = runGetState getWord8 s1 0
+  let (s3, s4)    = L.splitAt ((fromIntegral m) + 1) s2
+  let s5          = concat $ map byteToBits $ unpack s4
+  let (t, s6)     = restoreTree (unpack s3) s5
+  let d           = pack $ take (fromIntegral n) $ decode t s6
+  hPut o d
 
-main = do
-  (m:i:o:[]) <- getArgs
-  p <- openBinaryFile i ReadMode
-  q <- openBinaryFile o WriteMode
-  (process m) p q
-  hClose q
-  hClose p
-  where
-    process "-c" = compressFile
-    process "-d" = decompressFile
-    process _ = error "Usage: (-c|-d) infile outfile"
