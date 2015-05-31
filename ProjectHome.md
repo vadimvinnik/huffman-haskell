@@ -1,0 +1,1 @@
+A simple implementation of Huffman compression algorithm in Haskell
